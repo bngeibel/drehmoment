@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktive Lernplattform: Drehmoment & Hebelgesetz</title>
+    <!-- Tailwind CSS für modernes Design -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- KaTeX für mathematische Formeln -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <style>
+        .canvas-bg {
+            background: radial-gradient(circle, #f8fafc 0%, #e2e8f0 100%);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-indigo-600 text-white shadow-md py-6 px-4">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight">Mechanik-Lab: Drehmoment & Hebelgesetz</h1>
+                <p class="text-indigo-200 mt-1">Interaktive Erkundung für Unterricht und Selbststudium</p>
+            </div>
+            <div class="mt-4 md:mt-0 flex flex-wrap gap-2">
+                <button onclick="switchTab('tab1')" id="btn-tab1" class="px-3 py-2 rounded-lg font-medium bg-white text-indigo-700 shadow transition text-sm">1. Drehmoment</button>
+                <button onclick="switchTab('tab2')" id="btn-tab2" class="px-3 py-2 rounded-lg font-medium bg-indigo-700 text-indigo-100 hover:bg-indigo-500 transition text-sm">2. Hebelgesetz</button>
+                <button onclick="switchTab('tab3')" id="btn-tab3" class="px-3 py-2 rounded-lg font-medium bg-indigo-700 text-indigo-100 hover:bg-indigo-500 transition text-sm">3. Schräge Kraft (Pedal)</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto p-4 md:p-6 flex-grow w-full">
+
+        <!-- ================= TAB 1: DREHMOMENT ================= -->
+        <section id="section-tab1" class="space-y-6">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">Animation 1: Das Drehmoment an einer Schraube</h2>
+                <p class="text-slate-600 mb-4">
+                    Das Drehmoment <span class="math-formula" data-latex="M"></span> gibt an, wie stark eine Kraft <span class="math-formula" data-latex="F"></span> auf einen Drehpunkt (die Schraube) wirkt. 
+                    Es berechnet sich aus dem Produkt von Kraft und Hebelarm (<span class="math-formula" data-latex="l"></span>): 
+                    <strong class="text-indigo-600"><span class="math-formula" data-latex="M = F \cdot l"></span></strong>.
+                </p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Canvas & Controls -->
+                    <div class="lg:col-span-2 flex flex-col items-center bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <canvas id="canvasTab1" width="600" height="400" class="canvas-bg rounded-lg shadow-inner w-full max-w-[600px] border border-slate-300"></canvas>
+                        
+                        <div class="w-full mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">
+                                    Kraft <span class="math-formula" data-latex="F"></span>: <span id="valF" class="text-indigo-600 font-bold">50</span> N
+                                </label>
+                                <input type="range" id="rangeF" min="10" max="200" step="5" value="50" class="w-full accent-indigo-600 cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">
+                                    Hebelarm <span class="math-formula" data-latex="l"></span>: <span id="valL" class="text-indigo-600 font-bold">0.3</span> m
+                                </label>
+                                <input type="range" id="rangeL" min="0.1" max="0.8" step="0.05" value="0.3" class="w-full accent-indigo-600 cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Calculation & Explanation Panel -->
+                    <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-5 flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-lg font-bold text-indigo-900 mb-3 flex items-center gap-2">
+                                📊 Live-Berechnung
+                            </h3>
+                            <div class="space-y-3 text-slate-700">
+                                <p class="text-sm">Gegebene Werte:</p>
+                                <ul class="list-disc list-inside text-sm font-medium space-y-1 pl-2">
+                                    <li>Kraft <span class="math-formula" data-latex="F"></span> = <span id="calcF">50</span> N</li>
+                                    <li>Hebelarm <span class="math-formula" data-latex="l"></span> = <span id="calcL">0.3</span> m</li>
+                                </ul>
+                                <hr class="border-indigo-200 my-2">
+                                <p class="text-sm font-semibold">Formel:</p>
+                                <div class="bg-white p-2 rounded border border-indigo-200 text-center text-indigo-800 text-sm">
+                                    <span class="math-formula" data-latex="M = F \cdot l"></span>
+                                </div>
+                                <p class="text-sm font-semibold mt-2">Rechenweg:</p>
+                                <div class="bg-white p-3 rounded border border-indigo-200 text-center text-indigo-900 font-bold text-base shadow-sm">
+                                    <span id="calcStep" class="math-formula" data-latex="M = 50 \, \text{N} \cdot 0.3 \, \text{m} = 15.0 \, \text{Nm"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 bg-white p-3 rounded-lg border border-indigo-200 text-xs text-slate-600">
+                            💡 <strong>Merkregel:</strong> Je länger der Hebel (<span class="math-formula" data-latex="l"></span>) oder je größer die Kraft (<span class="math-formula" data-latex="F"></span>), desto größer ist das wirkende Drehmoment (<span class="math-formula" data-latex="M"></span>). Die Kraft wirkt hier immer im 90°-Winkel senkrecht zum Hebelarm.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 2: HEBELGESETZ ================= -->
+        <section id="section-tab2" class="space-y-6 hidden">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">Animation 2: Das Hebelgesetz (Die Wippe)</h2>
+                <p class="text-slate-600 mb-4">
+                    Das Hebelgesetz besagt, dass eine Wippe im Gleichgewicht ist, wenn die Drehmomente auf beiden Seiten gleich groß sind: 
+                    <strong class="text-indigo-600"><span class="math-formula" data-latex="F_1 \cdot l_1 = F_2 \cdot l_2"></span></strong>. 
+                    Steigt die Kraft auf einer Seite, dreht sich die Wippe in diese Richtung, es sei denn, der Hebelarm wird angepasst.
+                </p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Canvas & Controls -->
+                    <div class="lg:col-span-2 flex flex-col items-center bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <canvas id="canvasTab2" width="600" height="400" class="canvas-bg rounded-lg shadow-inner w-full max-w-[600px] border border-slate-300"></canvas>
+                        
+                        <div class="w-full mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                            <!-- Linke Seite -->
+                            <div class="border-b md:border-b-0 md:border-r border-slate-200 pb-3 md:pb-0 md:pr-3">
+                                <h4 class="font-bold text-indigo-700 text-sm mb-2">Linke Seite (1)</h4>
+                                <div class="mb-2">
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Kraft <span class="math-formula" data-latex="F_1"></span>: <span id="valF1" class="text-indigo-600 font-bold">50</span> N</label>
+                                    <input type="range" id="rangeF1" min="10" max="150" step="5" value="50" class="w-full accent-indigo-600 cursor-pointer">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Hebelarm <span class="math-formula" data-latex="l_1"></span>: <span id="valL1" class="text-indigo-600 font-bold">2.0</span> m</label>
+                                    <input type="range" id="rangeL1" min="0.5" max="3.0" step="0.25" value="2.0" class="w-full accent-indigo-600 cursor-pointer">
+                                </div>
+                            </div>
+                            <!-- Rechte Seite -->
+                            <div class="pt-2 md:pt-0">
+                                <h4 class="font-bold text-amber-600 text-sm mb-2">Rechte Seite (2)</h4>
+                                <div class="mb-2">
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Kraft <span class="math-formula" data-latex="F_2"></span>: <span id="valF2" class="text-amber-600 font-bold">50</span> N</label>
+                                    <input type="range" id="rangeF2" min="10" max="150" step="5" value="50" class="w-full accent-amber-600 cursor-pointer">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Hebelarm <span class="math-formula" data-latex="l_2"></span>: <span id="valL2" class="text-amber-600 font-bold">2.0</span> m</label>
+                                    <input type="range" id="rangeL2" min="0.5" max="3.0" step="0.25" value="2.0" class="w-full accent-amber-600 cursor-pointer">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Calculation & Balance Status -->
+                    <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-5 flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-lg font-bold text-indigo-900 mb-3 flex items-center gap-2">
+                                ⚖️ Hebelgesetz-Rechnung
+                            </h3>
+                            <div class="space-y-3 text-slate-700">
+                                <!-- Statusanzeige -->
+                                <div id="balanceStatus" class="p-3 rounded-lg text-center font-bold text-sm shadow-sm bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                    Wippe ist im Gleichgewicht!
+                                </div>
+
+                                <div class="text-xs space-y-1 pt-1">
+                                    <p class="font-semibold text-slate-600">Drehmoment links (<span class="math-formula" data-latex="M_1"></span>):</p>
+                                    <div class="bg-white p-2 rounded border border-indigo-200 text-indigo-700 font-bold text-center">
+                                        <span id="calcM1" class="math-formula" data-latex="M_1 = 50 \, \text{N} \cdot 2.0 \, \text{m} = 100 \, \text{Nm"></span>
+                                    </div>
+                                </div>
+
+                                <div class="text-xs space-y-1">
+                                    <p class="font-semibold text-slate-600">Drehmoment rechts (<span class="math-formula" data-latex="M_2"></span>):</p>
+                                    <div class="bg-white p-2 rounded border border-amber-200 text-amber-700 font-bold text-center">
+                                        <span id="calcM2" class="math-formula" data-latex="M_2 = 50 \, \text{N} \cdot 2.0 \, \text{m} = 100 \, \text{Nm"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 bg-white p-3 rounded-lg border border-indigo-200 text-xs text-slate-600">
+                            💡 <strong>Erklärung:</strong> Das Drehmoment ist auf der Seite größer, bei der das Produkt aus Kraft und Hebelarm (<span class="math-formula" data-latex="F \cdot l"></span>) höher ist. Die Wippe neigt sich in Richtung des größeren Drehmoments.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 3: FAHRRADPEDAL (KONSTANTE KRAFT NACH UNTEN) ================= -->
+        <section id="section-tab3" class="space-y-6 hidden">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">Animation 3: Das Fahrradpedal (Konstante Kraft nach unten)</h2>
+                <p class="text-slate-600 mb-4">
+                    Die Kraft wirkt <strong>stets senkrecht nach unten</strong> (Gewichtskraft des Fußes). Je nach Pedalwinkel <span class="math-formula" data-latex="\alpha"></span> ändert sich der wirksame Hebelarm (<span class="math-formula" data-latex="l_{\text{wirksam}} = l \cdot \sin(\alpha)"></span>, blauer Strich) und damit das Drehmoment: 
+                    <strong class="text-indigo-600"><span class="math-formula" data-latex="M = F \cdot l_{\text{wirksam}}"></span></strong>.
+                </p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Canvas & Controls -->
+                    <div class="lg:col-span-2 flex flex-col items-center bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <canvas id="canvasTab3" width="600" height="400" class="canvas-bg rounded-lg shadow-inner w-full max-w-[600px] border border-slate-300"></canvas>
+                        
+                        <div class="w-full mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">
+                                    Kraft <span class="math-formula" data-latex="F"></span>: <span id="valF3" class="text-indigo-600 font-bold">100</span> N
+                                </label>
+                                <input type="range" id="rangeF3" min="20" max="250" step="10" value="100" class="w-full accent-indigo-600 cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">
+                                    Pedalwinkel <span class="math-formula" data-latex="\alpha"></span>: <span id="valAlpha3" class="text-indigo-600 font-bold">90</span>°
+                                </label>
+                                <input type="range" id="rangeAlpha3" min="0" max="360" step="5" value="90" class="w-full accent-indigo-600 cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Calculation & Explanation Panel -->
+                    <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-5 flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-lg font-bold text-indigo-900 mb-3 flex items-center gap-2">
+                                📊 Wirkender Hebelarm & Moment
+                            </h3>
+                            <div class="space-y-3 text-slate-700">
+                                <ul class="list-disc list-inside text-xs font-medium space-y-1 pl-1">
+                                    <li>Kurbellänge <span class="math-formula" data-latex="l"></span> = <span id="calcL3">0.2</span> m</li>
+                                    <li>Kraft <span class="math-formula" data-latex="F"></span> = <span id="calcFval3">100</span> N (nach unten)</li>
+                                    <li>Winkel <span class="math-formula" data-latex="\alpha"></span> = <span id="calcAlphaVal3">90</span>°</li>
+                                </ul>
+                                <hr class="border-indigo-200 my-2">
+                                <div class="text-xs space-y-1">
+                                    <p class="font-semibold text-slate-600">Wirksamer Hebelarm (<span class="math-formula" data-latex="l_{\text{wirksam}}"></span>):</p>
+                                    <div class="bg-white p-2 rounded border border-indigo-200 text-indigo-700 font-bold text-center">
+                                        <span id="calcLPerp" class="math-formula" data-latex="l_{\text{wirksam}} = 0.2 \, \text{m} \cdot \sin(90^{\circ}) = 0.20 \, \text{m"></span>
+                                    </div>
+                                </div>
+                                <div class="text-xs space-y-1">
+                                    <p class="font-semibold text-slate-600">Resultierendes Drehmoment (<span class="math-formula" data-latex="M"></span>):</p>
+                                    <div class="bg-white p-3 rounded border border-indigo-200 text-indigo-900 font-bold text-center text-sm shadow-sm">
+                                        <span id="calcM3" class="math-formula" data-latex="M = 20.0 \, \text{Nm"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 bg-white p-3 rounded-lg border border-indigo-200 text-xs text-slate-600">
+                            💡 <strong>Erklärung:</strong> 
+                            <ul class="list-disc list-inside mt-1 space-y-1">
+                                <li><strong>0° / 180° (Totpunkt):</strong> Blauer wirksamer Hebelarm = 0 $\rightarrow$ <strong>kein Drehmoment</strong> (<span class="math-formula" data-latex="M = 0 \, \text{Nm"></span>).</li>
+                                <li><strong>90° / 270° (Waagerecht):</strong> Blauer Hebelarm ist maximal (Kurbellänge) $\rightarrow$ <strong>maximales Drehmoment</strong>.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-800 text-slate-400 py-4 text-center text-sm mt-auto">
+        <p>Interaktives Mechanik-Lernmodul • Erstellt für Bildung und Unterricht</p>
+    </footer>
+
+    <!-- JavaScript Logik -->
+    <script>
+        function renderMath() {
+            document.querySelectorAll(".math-formula").forEach(function(el) {
+                let latexCode = el.getAttribute("data-latex");
+                if (latexCode) {
+                    try {
+                        katex.render(latexCode, el, { throwOnError: false });
+                    } catch(e) {
+                        el.textContent = latexCode;
+                    }
+                }
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            renderMath();
+            initTab1();
+            initTab2();
+            initTab3();
+        });
+
+        // Tab Umschaltung
+        function switchTab(tabId) {
+            const tabs = ['tab1', 'tab2', 'tab3'];
+            tabs.forEach(t => {
+                const sec = document.getElementById('section-' + t);
+                const btn = document.getElementById('btn-' + t);
+                if (t === tabId) {
+                    sec.classList.remove('hidden');
+                    btn.className = "px-3 py-2 rounded-lg font-medium bg-white text-indigo-700 shadow transition text-sm";
+                } else {
+                    sec.classList.add('hidden');
+                    btn.className = "px-3 py-2 rounded-lg font-medium bg-indigo-700 text-indigo-100 hover:bg-indigo-500 transition text-sm";
+                }
+            });
+        }
+
+        // ================= ANIMATION 1 LOGIK =================
+        function initTab1() {
+            const canvas = document.getElementById('canvasTab1');
+            const ctx = canvas.getContext('2d');
+            
+            const rangeF = document.getElementById('rangeF');
+            const rangeL = document.getElementById('rangeL');
+            const valF = document.getElementById('valF');
+            const valL = document.getElementById('valL');
+            
+            const calcF = document.getElementById('calcF');
+            const calcL = document.getElementById('calcL');
+            const calcStep = document.getElementById('calcStep');
+
+            let angle = 0;
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                let F = parseFloat(rangeF.value);
+                let l = parseFloat(rangeL.value);
+
+                valF.textContent = F;
+                valL.textContent = l.toFixed(2);
+                calcF.textContent = F;
+                calcL.textContent = l.toFixed(2);
+
+                let M = F * l;
+                calcStep.setAttribute("data-latex", `M = ${F} \\, \\text{N} \\cdot ${l.toFixed(2)} \\, \\text{m} = ${M.toFixed(1)} \\, \\text{Nm}`);
+                renderMath();
+
+                let cx = 300;
+                let cy = 220;
+                let pixelPerMeter = 250;
+                let armLenPx = l * pixelPerMeter;
+
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(angle);
+
+                ctx.beginPath();
+                ctx.arc(0, 0, 32, 0, Math.PI * 2);
+                ctx.fillStyle = '#cbd5e1';
+                ctx.fill();
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = '#64748b';
+                ctx.stroke();
+
+                ctx.beginPath();
+                for (let i = 0; i < 6; i++) {
+                    let a = (i * Math.PI) / 3;
+                    let hx = 22 * Math.cos(a);
+                    let hy = 22 * Math.sin(a);
+                    if (i === 0) ctx.moveTo(hx, hy);
+                    else ctx.lineTo(hx, hy);
+                }
+                ctx.closePath();
+                ctx.fillStyle = '#475569';
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#1e293b';
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.arc(0, 0, 8, 0, Math.PI * 2);
+                ctx.fillStyle = '#94a3b8';
+                ctx.fill();
+
+                ctx.fillStyle = '#3b82f6';
+                ctx.fillRect(0, -12, armLenPx, 24);
+                ctx.beginPath();
+                ctx.arc(armLenPx, 0, 12, -Math.PI/2, Math.PI/2);
+                ctx.fillStyle = '#2563eb';
+                ctx.fill();
+
+                ctx.restore();
+
+                let tipX = cx + armLenPx * Math.cos(angle);
+                let tipY = cy + armLenPx * Math.sin(angle);
+
+                let arrowLen = F * 0.8;
+                let perpX = -Math.sin(angle);
+                let perpY = Math.cos(angle);
+
+                drawArrow(ctx, tipX, tipY, tipX + perpX * arrowLen, tipY + perpY * arrowLen, '#dc2626', 4);
+
+                ctx.fillStyle = '#dc2626';
+                ctx.font = 'bold 14px sans-serif';
+                ctx.fillText(`F = ${F} N`, tipX + perpX * arrowLen + 10, tipY + perpY * arrowLen + 5);
+
+                ctx.beginPath();
+                ctx.arc(cx, cy, 45, angle, angle + 0.5, false);
+                ctx.strokeStyle = '#4f46e5';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                ctx.fillStyle = '#4f46e5';
+                ctx.font = 'bold 13px sans-serif';
+                ctx.fillText(`M = ${M.toFixed(1)} Nm`, cx + 55, cy - 20);
+
+                angle += (M * 0.0002);
+                requestAnimationFrame(draw);
+            }
+            draw();
+        }
+
+        // ================= ANIMATION 2 LOGIK =================
+        function initTab2() {
+            const canvas = document.getElementById('canvasTab2');
+            const ctx = canvas.getContext('2d');
+
+            const rangeF1 = document.getElementById('rangeF1');
+            const rangeL1 = document.getElementById('rangeL1');
+            const rangeF2 = document.getElementById('rangeF2');
+            const rangeL2 = document.getElementById('rangeL2');
+
+            const valF1 = document.getElementById('valF1');
+            const valL1 = document.getElementById('valL1');
+            const valF2 = document.getElementById('valF2');
+            const valL2 = document.getElementById('valL2');
+
+            const calcM1 = document.getElementById('calcM1');
+            const calcM2 = document.getElementById('calcM2');
+            const balanceStatus = document.getElementById('balanceStatus');
+
+            let currentTilt = 0;
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                let F1 = parseFloat(rangeF1.value);
+                let l1 = parseFloat(rangeL1.value);
+                let F2 = parseFloat(rangeF2.value);
+                let l2 = parseFloat(rangeL2.value);
+
+                valF1.textContent = F1;
+                valL1.textContent = l1.toFixed(2);
+                valF2.textContent = F2;
+                valL2.textContent = l2.toFixed(2);
+
+                let M1 = F1 * l1;
+                let M2 = F2 * l2;
+
+                calcM1.setAttribute("data-latex", `M_1 = ${F1} \\, \\text{N} \\cdot ${l1.toFixed(2)} \\, \\text{m} = ${M1.toFixed(1)} \\, \\text{Nm}`);
+                calcM2.setAttribute("data-latex", `M_2 = ${F2} \\, \\text{N} \\cdot ${l2.toFixed(2)} \\, \\text{m} = ${M2.toFixed(1)} \\, \\text{Nm}`);
+                renderMath();
+
+                let diff = M1 - M2;
+                if (Math.abs(diff) < 0.5) {
+                    balanceStatus.className = "p-3 rounded-lg text-center font-bold text-sm shadow-sm bg-emerald-100 text-emerald-800 border border-emerald-200";
+                    balanceStatus.textContent = "Wippe ist im Gleichgewicht!";
+                } else if (M1 > M2) {
+                    balanceStatus.className = "p-3 rounded-lg text-center font-bold text-sm shadow-sm bg-indigo-100 text-indigo-800 border border-indigo-200";
+                    balanceStatus.textContent = "Drehmoment links ist größer! (Neigt sich nach links)";
+                } else {
+                    balanceStatus.className = "p-3 rounded-lg text-center font-bold text-sm shadow-sm bg-amber-100 text-amber-800 border border-amber-200";
+                    balanceStatus.textContent = "Drehmoment rechts ist größer! (Neigt sich nach rechts)";
+                }
+
+                let targetTilt = Math.max(-0.35, Math.min(0.35, (M2 - M1) * 0.003));
+                currentTilt += (targetTilt - currentTilt) * 0.1;
+
+                let cx = 300;
+                let cy = 250;
+                let scaleX = 80;
+
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx - 35, cy + 90);
+                ctx.lineTo(cx + 35, cy + 90);
+                ctx.closePath();
+                ctx.fillStyle = '#64748b';
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#334155';
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(cx - 200, cy + 90);
+                ctx.lineTo(cx + 200, cy + 90);
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = '#94a3b8';
+                ctx.stroke();
+
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(currentTilt);
+
+                ctx.beginPath();
+                ctx.rect(-l1 * scaleX - 15, -8, (l1 + l2) * scaleX + 30, 16);
+                ctx.fillStyle = '#334155';
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#1e293b';
+                ctx.stroke();
+
+                ctx.restore();
+
+                let p1RelX = -l1 * scaleX;
+                let p1RelY = -8;
+                let p1WorldX = cx + p1RelX * Math.cos(currentTilt) - p1RelY * Math.sin(currentTilt);
+                let p1WorldY = cy + p1RelX * Math.sin(currentTilt) + p1RelY * Math.cos(currentTilt);
+
+                let p2RelX = l2 * scaleX;
+                let p2RelY = -8;
+                let p2WorldX = cx + p2RelX * Math.cos(currentTilt) - p2RelY * Math.sin(currentTilt);
+                let p2WorldY = cy + p2RelX * Math.sin(currentTilt) + p2RelY * Math.cos(currentTilt);
+
+                let boxSize1 = Math.max(30, F1 * 0.4);
+                ctx.fillStyle = '#3b82f6';
+                ctx.fillRect(p1WorldX - boxSize1 / 2, p1WorldY - boxSize1, boxSize1, boxSize1);
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#1d4ed8';
+                ctx.strokeRect(p1WorldX - boxSize1 / 2, p1WorldY - boxSize1, boxSize1, boxSize1);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${F1} N`, p1WorldX, p1WorldY - boxSize1 / 2 + 4);
+
+                let boxSize2 = Math.max(30, F2 * 0.4);
+                ctx.fillStyle = '#f59e0b';
+                ctx.fillRect(p2WorldX - boxSize2 / 2, p2WorldY - boxSize2, boxSize2, boxSize2);
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#b45309';
+                ctx.strokeRect(p2WorldX - boxSize2 / 2, p2WorldY - boxSize2, boxSize2, boxSize2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(`${F2} N`, p2WorldX, p2WorldY - boxSize2 / 2 + 4);
+
+                requestAnimationFrame(draw);
+            }
+            draw();
+        }
+
+        // ================= ANIMATION 3 LOGIK (FAHRRADPEDAL) =================
+        function initTab3() {
+            const canvas = document.getElementById('canvasTab3');
+            const ctx = canvas.getContext('2d');
+
+            const rangeF3 = document.getElementById('rangeF3');
+            const rangeAlpha3 = document.getElementById('rangeAlpha3');
+            const valF3 = document.getElementById('valF3');
+            const valAlpha3 = document.getElementById('valAlpha3');
+
+            const calcFval3 = document.getElementById('calcFval3');
+            const calcAlphaVal3 = document.getElementById('calcAlphaVal3');
+            const calcLPerp = document.getElementById('calcLPerp');
+            const calcM3 = document.getElementById('calcM3');
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                let F = parseFloat(rangeF3.value);
+                let alphaDeg = parseFloat(rangeAlpha3.value);
+
+                valF3.textContent = F;
+                valAlpha3.textContent = alphaDeg;
+                calcFval3.textContent = F;
+                calcAlphaVal3.textContent = alphaDeg;
+
+                let alphaRad = alphaDeg * (Math.PI / 180);
+                let l = 0.2; // 0.2 m Kurbellänge
+                
+                // Korrekte trigonometrische Beziehung bei vertikaler Kraft:
+                // Wenn Winkel alpha von der unteren vertikalen Linie (0° = unten, 90° = waagerecht rechts) gezählt wird:
+                // l_wirksam = l * sin(alpha)
+                let l_wirksam = l * Math.sin(alphaRad);
+                let M = F * Math.abs(l_wirksam);
+
+                calcLPerp.setAttribute("data-latex", `l_{\\text{wirksam}} = ${l} \\, \\text{m} \\cdot |\\sin(${alphaDeg}^{\\circ})| = ${Math.abs(l_wirksam).toFixed(2)} \\, \\text{m}`);
+                calcM3.setAttribute("data-latex", `M = ${F} \\, \\text{N} \\cdot ${Math.abs(l_wirksam).toFixed(2)} \\, \\text{m} = ${M.toFixed(1)} \\, \\text{Nm}`);
+                renderMath();
+
+                let cx = 300;
+                let cy = 200;
+                let crankLenPx = 130; // 0.2m entspr. 130px
+
+                // Canvas-Winkelzuordnung: 
+                // alphaDeg = 0° (unten) -> Canvas Winkel +PI/2
+                // alphaDeg = 90° (waagerecht rechts) -> Canvas Winkel 0
+                // alphaDeg = 180° (oben) -> Canvas Winkel -PI/2
+                let canvasAngle = Math.PI / 2 - alphaRad;
+
+                let tipX = cx + crankLenPx * Math.cos(canvasAngle);
+                let tipY = cy + crankLenPx * Math.sin(canvasAngle);
+
+                // Tretlager (Drehpunkt)
+                ctx.beginPath();
+                ctx.arc(cx, cy, 20, 0, Math.PI * 2);
+                ctx.fillStyle = '#475569';
+                ctx.fill();
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = '#1e293b';
+                ctx.stroke();
+
+                // Kurbelarm
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(tipX, tipY);
+                ctx.lineWidth = 14;
+                ctx.strokeStyle = '#334155';
+                ctx.stroke();
+
+                // Pedalplatte
+                ctx.save();
+                ctx.translate(tipX, tipY);
+                ctx.rotate(canvasAngle);
+                ctx.fillStyle = '#64748b';
+                ctx.fillRect(-15, -6, 30, 12);
+                ctx.restore();
+
+                // Kraftvektor F (WIRKT IMMER SENKRECHT NACH UNTEN)
+                let forceVectorLen = F * 0.5;
+                drawArrow(ctx, tipX, tipY, tipX, tipY + forceVectorLen, '#dc2626', 4);
+                ctx.fillStyle = '#dc2626';
+                ctx.font = 'bold 13px sans-serif';
+                ctx.fillText(`F = ${F} N`, tipX + 15, tipY + forceVectorLen / 2);
+
+                // --- VISUALISIERUNG DES WIRKSAMEN HEBELARMS ---
+                // Der wirksame Hebelarm ist der horizontale Abstand vom Drehpunkt zur Wirkungslinie der Kraft
+                let effectiveLenPx = crankLenPx * Math.sin(alphaRad);
+
+                // Hilfslinie nach unten (Wirkungslinie der Kraft)
+                ctx.beginPath();
+                ctx.setLineDash([3, 3]);
+                ctx.moveTo(tipX, tipY);
+                ctx.lineTo(tipX, tipY + forceVectorLen + 15);
+                ctx.strokeStyle = '#94a3b8';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Blauer Balken / Maß für den wirksamen Hebelarm auf horizontaler Achse auf Höhe des Tretlagers
+                ctx.beginPath();
+                ctx.moveTo(cx, cy + 35);
+                ctx.lineTo(tipX, cy + 35);
+                ctx.strokeStyle = '#2563eb';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+
+                // Begrenzungslinien für den blauen Hebelarm
+                ctx.beginPath();
+                ctx.moveTo(cx, cy + 25); ctx.lineTo(cx, cy + 45);
+                ctx.moveTo(tipX, cy + 25); ctx.lineTo(tipX, cy + 45);
+                ctx.strokeStyle = '#2563eb';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Beschriftung wirksamer Hebelarm
+                ctx.fillStyle = '#2563eb';
+                ctx.font = 'bold 12px sans-serif';
+                ctx.textAlign = 'center';
+                let midX = (cx + tipX) / 2;
+                ctx.fillText(`l_wirksam = ${Math.abs(l_wirksam).toFixed(2)} m`, midX, cy + 58);
+                ctx.textAlign = 'left'; // Reset
+
+                // Drehmoment-Text
+                ctx.fillStyle = '#4f46e5';
+                ctx.font = 'bold 14px sans-serif';
+                ctx.fillText(`M = ${M.toFixed(1)} Nm`, cx + 20, cy - 30);
+
+                requestAnimationFrame(draw);
+            }
+            draw();
+        }
+
+        function drawArrow(ctx, fromX, fromY, toX, toY, color, width) {
+            const headLength = 12;
+            const angle = Math.atan2(toY - fromY, toX - fromX);
+
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = width;
+
+            ctx.beginPath();
+            ctx.moveTo(fromX, fromY);
+            ctx.lineTo(toX, toY);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(toX, toY);
+            ctx.lineTo(toX - headLength * Math.cos(angle - Math.PI / 6), toY - headLength * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(toX - headLength * Math.cos(angle + Math.PI / 6), toY - headLength * Math.sin(angle + Math.PI / 6));
+            ctx.closePath();
+            ctx.fill();
+        }
+    </script>
+</body>
+</html>
